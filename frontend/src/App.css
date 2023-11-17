@@ -7,7 +7,24 @@
   pointer-events: none;
 }
 
+.logo-text{
+  padding-top: 7px;
+}
+
 /* boostrap form style */
+
+@import url("https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.6/css/flag-icon.min.css");
+
+.selected-nationality {
+  display: flex;
+  align-items: center;
+}
+
+.flag-icon-container {
+  margin-left: 10px; /* Lub dostosuj margines zgodnie z Twoimi preferencjami */
+  display: inline-block; /* Ustawienie, aby kontener miał inline-block, aby obejść problem */
+}
+
 
 .form-inline {
   width: 100%;
