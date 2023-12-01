@@ -25,6 +25,15 @@
   display: inline-block; /* Ustawienie, aby kontener miał inline-block, aby obejść problem */
 }
 
+.dropdown-toggle{
+  background:none;
+  border: none;
+}
+
+.nav-link{
+  font-size: 20px;
+}
+
 
 .form-inline {
   width: 100%;
@@ -39,7 +48,7 @@
 }
 
 .form-control {
-  width: 80% !important;
+  width: 100% !important;
 }
 
 span.input-group-addon {
@@ -51,4 +60,5 @@ span.input-group-addon {
     justify-content: center;
     align-items: center;
     margin-top: 5%;
+    margin-bottom: 5%;
 }

@@ -1,0 +1,14 @@
+Watching for file changes with StatReloader
+Forbidden: /api/user
+"GET /api/user HTTP/1.1" 403 58
+Forbidden: /api/user
+"GET /api/user HTTP/1.1" 403 58
+"POST /api/login HTTP/1.1" 200 52
+"POST /api/logout HTTP/1.1" 200 0
+"POST /api/login HTTP/1.1" 200 52
+Forbidden: /api/user
+"GET /api/user HTTP/1.1" 403 58
+Forbidden: /api/user
+"GET /api/user HTTP/1.1" 403 58
+"POST /api/login HTTP/1.1" 200 52
+C:\Users\Gosia\Desktop\praca inzynierska projekt\backend\backend\settings.py changed, reloading.

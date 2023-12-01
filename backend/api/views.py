@@ -6,6 +6,11 @@ from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerial
 from rest_framework import permissions, status
 from .validations import custom_validation, validate_email, validate_password
 
+import logging
+
+# Dodaj tę linię na początku pliku views.py
+logger = logging.getLogger(__name__)
+
 
 class UserRegister(APIView):
 	permission_classes = (permissions.AllowAny,)
@@ -31,6 +36,8 @@ class UserLogin(APIView):
 		if serializer.is_valid(raise_exception=True):
 			user = serializer.check_user(data)
 			login(request, user)
+			logger.info(f"User logged in: {request.user}")
+			logger.info(f"Session ID cookie: {request.COOKIES.get('sessionid')}")
 			return Response(serializer.data, status=status.HTTP_200_OK)
 
 

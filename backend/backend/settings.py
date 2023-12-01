@@ -25,17 +25,34 @@ SECRET_KEY = 'django-insecure-lja%h5!5loib-n-vi&_j6qm(km^u#!cq)zgh$(v1@54j1x+s4a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost',
     'http://127.0.0.1',
     'http://0.0.0.0',
     "http://localhost:3000",
+    'http://10.3.92.175:3000',
 ]
 
-CORS_ALLOWED_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True
 
+# CORS_EXPOSE_HEADERS = ['Set-Cookie']
+
+# settings.py
+
+# Ustaw czas trwania sesji na 1 dzień (wartość w sekundach)
+# SESSION_COOKIE_AGE = 86400
+
+# Ustawienia CSRF
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'  # 'None' dla cross-origin requests
+
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'None'
+
+# CSRF_COOKIE_SECURE = False
+# CSRF_COOKIE_SAMESITE = 'none'
 
 # Application definition
 
@@ -153,3 +170,19 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}
+
+
