@@ -1,18 +1,30 @@
 // LoginPage.js
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import '../App.css';
 import '../Global.css';
 import Header from '../components/Header';
+import { UserContext } from '../App.js';
+import { ClientContext } from '../App.js';
+import CSRFToken from '../components/CSRFToken.js';
+import Cookies from 'js-cookie';
 
-const LoginPage = ({client, setCurrentUser }) => {
+const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const {setCurrentUser } = useContext(UserContext);
+  const {client} = useContext(ClientContext);
+
+  // Cookies.set('testCookie', 'testValue');
+  // const testValue = Cookies.get('testCookie');
+  // console.log('Test Cookie Value:', testValue);
 
   const submitLogin = (e) => {
     e.preventDefault();
+    const csrfToken = Cookies.get('csrftoken');
+    console.log('CSRF Token:', csrfToken);
     client.post(
       "/api/login",
       {
@@ -21,8 +33,13 @@ const LoginPage = ({client, setCurrentUser }) => {
       },
       {
         mode: 'cors',
-        credentials: 'include'
-      })
+        credentials: 'include',
+        // headers: {
+        //   'Content-Type': 'application/json',
+        //   'X-CSRFToken': csrfToken,
+        // }
+      },
+      )
     .then(function (res) {
       console.log("Response headers:", res.headers);
       setCurrentUser(true);
@@ -35,6 +52,7 @@ const LoginPage = ({client, setCurrentUser }) => {
     <div className="container-md bg-dark bg-card">
       <div className="center">
               <Form onSubmit={e => submitLogin(e)}>
+                  {/* <CSRFToken></CSRFToken> */}
                   <Form.Group className="mb-3" controlId="formBasicEmail">
                   <Form.Label>Email address</Form.Label>
                   <Form.Control type="email" placeholder="Enter email" value={email} onChange={e => setEmail(e.target.value)} />

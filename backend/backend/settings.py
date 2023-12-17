@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,6 +28,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+CORS_ALLOW_HEADERS = [
+    'Accept',
+    'Accept-Language',
+    'Content-Language',
+    'Content-Type',  # Add this line
+    'X-CSRFToken',   # Add this line
+]
+
 CORS_ALLOWED_ORIGINS = [
     'http://localhost',
     'http://127.0.0.1',
@@ -35,7 +44,18 @@ CORS_ALLOWED_ORIGINS = [
     'http://10.3.92.175:3000',
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+]
+# ALLOWED_HOSTS = [
+#     'localhost:3000',
+# ]
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:3000',
+]
+
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = True
 
 # CORS_EXPOSE_HEADERS = ['Set-Cookie']
 
@@ -47,9 +67,13 @@ CORS_ALLOW_CREDENTIALS = True
 # Ustawienia CSRF
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = 'None'  # 'None' dla cross-origin requests
+CSRF_COOKIE_HTTPONLY = False
 
 SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_HTTPONLY = False
+
+CORS_ALLOW_HEADERS = ['X-CSRFToken']
 
 # CSRF_COOKIE_SECURE = False
 # CSRF_COOKIE_SAMESITE = 'none'
@@ -165,6 +189,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'build/static')
+]
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

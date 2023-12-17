@@ -1,17 +1,48 @@
 from django.contrib.auth import get_user_model, login, logout
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.views import APIView
+from rest_framework import viewsets
 from rest_framework.response import Response
-from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerializer
+from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, DestroyAPIView,RetrieveUpdateAPIView
+from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerializer, UserDeleteSerializer, DeckSerializer, CardSerializer,DeckEditSerializer,CardCreateSerializer
 from rest_framework import permissions, status
 from .validations import custom_validation, validate_email, validate_password
+from .models import Deck
+from rest_framework.decorators import action
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+from django.shortcuts import get_object_or_404
 
 import logging
 
 # Dodaj tę linię na początku pliku views.py
 logger = logging.getLogger(__name__)
 
+# @method_decorator(ensure_csrf_cookie, name='dispatch')
+# class GetCSRFToken(APIView):
+# 	permission_classes = (permissions.AllowAny,)
 
+# 	def get(self, request, format=None):
+# 		return Response({'success': 'CSRF cookie set'})
+	
+# @method_decorator(ensure_csrf_cookie, name='dispatch')
+# class CheckAuthenticatedView(APIView):
+#     def get(self, request, format=None):
+#         user = self.request.user
+
+#         try:
+#             isAuthenticated = user.is_authenticated
+
+#             if isAuthenticated:
+#                 return Response({ 'isAuthenticated': 'success' })
+#             else:
+#                 return Response({ 'isAuthenticated': 'error' })
+#         except:
+#             return Response({ 'error': 'Something went wrong when checking authentication status' })
+
+
+
+# @method_decorator(csrf_protect, name="dispatch")
 class UserRegister(APIView):
 	permission_classes = (permissions.AllowAny,)
 	def post(self, request):
@@ -24,6 +55,7 @@ class UserRegister(APIView):
 		return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+# @method_decorator(csrf_protect, name="dispatch")
 class UserLogin(APIView):
 	permission_classes = (permissions.AllowAny,)
 	authentication_classes = (SessionAuthentication,)
@@ -45,14 +77,170 @@ class UserLogout(APIView):
 	permission_classes = (permissions.AllowAny,)
 	authentication_classes = ()
 	def post(self, request):
-		logout(request)
-		return Response(status=status.HTTP_200_OK)
+		try:
+			logout(request)
+			return Response(status=status.HTTP_200_OK)
+		except:
+			return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+# @method_decorator(ensure_csrf_cookie, name='dispatch')
 class UserView(APIView):
 	permission_classes = (permissions.IsAuthenticated,)
 	authentication_classes = (SessionAuthentication,)
 	##
 	def get(self, request):
 		serializer = UserSerializer(request.user)
+		logger.info(f"User viewed profile: {request.user}")
 		return Response({'user': serializer.data}, status=status.HTTP_200_OK)
+	
+# @method_decorator(csrf_protect, name="dispatch")
+class UserDeleteView(APIView):
+	permission_classes = (permissions.IsAuthenticated,)
+	# permission_classes = (permissions.AllowAny,)
+	authentication_classes = (SessionAuthentication,)
+
+	def delete(self, request, format=None):
+		logger.info(f"DELETE request received: {request}")
+		user = self.request.user
+		try:
+			# Pobierz obiekt użytkownika
+			user = get_user_model().objects.get(pk=user)
+			
+			# Usuń użytkownika
+			user.delete()
+
+			# Wyloguj użytkownika po usunięciu
+			logout(request)
+
+			return Response({'detail': 'User deleted successfully'}, status=status.HTTP_200_OK)
+		except Exception as e:
+			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+	
+class DeckDetailView(RetrieveAPIView):
+    queryset = Deck.objects.all()
+    serializer_class = DeckSerializer
+	
+# class DeckCreateView(CreateAPIView):
+# 	serializer_class = DeckSerializer
+# 	permission_classes = (permissions.IsAuthenticated,)
+# 	authentication_classes = (SessionAuthentication,)
+
+# 	def post(self, request):
+# 		serializer = self.get_serializer(data=request.data)
+# 		serializer.is_valid(raise_exception=True)
+
+# 		# Ustaw id użytkownika i zapisz deck
+# 		serializer.validated_data['user'] = request.data.get("user")
+# 		queryset = serializer.save()
+
+# 		return Response(self.get_serializer(queryset).data, status=status.HTTP_201_CREATED)
+
+class IsOwnerOfDeck(permissions.BasePermission):
+    message = 'You do not have permission to access this deck.'
+
+    def has_permission(self, request, view):
+        deck_id = view.kwargs.get('pk')
+        deck = Deck.objects.get(pk=deck_id)
+        return deck.user == request.user
+
+class DeckCreateView(CreateAPIView):
+	serializer_class = DeckSerializer
+	permission_classes = (permissions.IsAuthenticated,)
+
+	def post(self, request, *args, **kwargs):
+		user = request.data.get("user")
+		name = request.data.get("name")
+
+		user = get_user_model().objects.get(pk=user)
+
+		queryset = Deck.objects.create(
+			user=user,
+			name=name,
+		)
+		serializer = self.get_serializer(queryset, many=False)
+		return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class DeckDeleteView(DestroyAPIView):
+	queryset = Deck.objects.all()
+	serializer_class = DeckSerializer
+	permission_classes = (permissions.IsAuthenticated, IsOwnerOfDeck)
+
+	def delete(self, request, *args, **kwargs):
+		try:
+			instance = self.get_object()
+			self.perform_destroy(instance)
+			return Response({'detail': 'Deck deleted successfully'}, status=status.HTTP_200_OK)
+		except Exception as e:
+			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class DeckUpdateView(RetrieveUpdateAPIView):
+	queryset = Deck.objects.all()
+	serializer_class = DeckEditSerializer
+	permission_classes = (permissions.IsAuthenticated, IsOwnerOfDeck)
+	
+	def partial_update(self, request, *args, **kwargs):
+		instance = self.get_object()
+		instance.name = request.data.get("name")
+		instance.save()
+		serializer = self.serializer_class(instance, partial=True)
+		return Response(serializer.data, status=status.HTTP_200_OK)
+	
+class CardCreateView(CreateAPIView):
+    serializer_class = CardCreateSerializer
+    permission_classes = (permissions.IsAuthenticated, IsOwnerOfDeck)
+
+    def create(self, request, *args, **kwargs):
+        deck = request.data.get('deck')
+        # deck = Deck.objects.get(pk=deck)
+
+        flashcards_data = request.data.get('flashcards', [])
+
+        for flashcard_data in flashcards_data:
+            flashcard_data['deck'] = deck  # Zmiana tego wiersza
+            serializer = self.serializer_class(data=flashcard_data)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'detail': 'Flashcards added successfully'}, status=status.HTTP_201_CREATED)
+
+
+
+# class DeckViewSet(viewsets.ModelViewSet):
+
+# 	# permission_classes = (permissions.IsAuthenticated,)
+# 	authentication_classes = (SessionAuthentication,)
+# 	queryset = Deck.objects.all()
+# 	serializer_class = DeckSerializer
+
+# 	@action(detail=False, methods=['post'])
+# 	def create_deck_with_flashcards(self, request):
+# 		try:
+# 			# Pobierz dane dotyczące talii (decku) z żądania
+# 			deck_data = request.data.get('deck', {})
+# 			flashcards_data = request.data.get('flashcards', [])
+
+# 			# Utwórz nową talię
+# 			deck_serializer = DeckSerializer(data=deck_data)
+# 			if deck_serializer.is_valid():
+# 				deck = deck_serializer.save()
+
+# 				# Dodaj fiszki do talii
+# 				for flashcard_data in flashcards_data:
+# 					flashcard_data['deck'] = deck.id
+# 					card_serializer = CardSerializer(data=flashcard_data)
+# 					if card_serializer.is_valid():
+# 						card_serializer.save()
+# 					else:
+# 						return Response(card_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# 				return Response({'detail': 'Deck and flashcards created successfully'}, status=status.HTTP_201_CREATED)
+# 			else:
+# 				return Response(deck_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# 		except Exception as e:
+# 			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

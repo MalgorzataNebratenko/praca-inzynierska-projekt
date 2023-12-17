@@ -1,5 +1,5 @@
 // RegisterPage.js
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Form, Button, Dropdown } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
@@ -8,14 +8,18 @@ import nationalities from '../nationalities';
 import '../App.css';
 import '../Global.css';
 import Header from '../components/Header';
+import { UserContext } from '../App.js';
+import { ClientContext } from '../App.js';
 
-const RegisterPage = ({client, setCurrentUser }) => {
+const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [toggleContents, setToggleContents] = useState();
   const [selectedCountry, setSelectedCountry] = useState();
   const [countries] = useState(nationalities);
+  const {setCurrentUser } = useContext(UserContext);
+  const {client} = useContext(ClientContext);
 
   const submitRegistration = (e) => {
     e.preventDefault();

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from django.core.exceptions import ValidationError
+from .models import Deck, Card
 
 UserModel = get_user_model()
 
@@ -29,4 +30,48 @@ class UserLoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = UserModel
-		fields = ('email', 'username', 'nationality')
+		fields = ('user_id','email', 'username', 'nationality')
+          
+class UserDeleteSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = UserModel
+		fields = '__all__'
+          
+class DeckSerializer(serializers.ModelSerializer):
+    # cards = serializers.PrimaryKeyRelatedField(
+    #     many=True, read_only=True
+    # )
+
+    class Meta:
+        model = Deck
+        fields = ("deck_id", "user", "name", "created_at")
+
+class DeckEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Deck
+        fields = ['name' ]
+
+class CardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Card
+        fields = (
+            "card_id",
+            "deck",
+            "front",
+            "back",
+            "viewed",
+            "correct_answers",
+            "wrong_answers",
+            "created_at",
+        )
+
+    # def to_representation(self, instance):
+    #     rep = super(CardSerializer, self).to_representation(instance)
+    #     rep["deck"] = instance.deck.name
+    #     rep["deck_id"] = instance.deck.id
+    #     return rep
+
+class CardCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Card
+        fields = ['deck','front', 'back']

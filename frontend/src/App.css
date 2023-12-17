@@ -62,3 +62,8 @@ span.input-group-addon {
     margin-top: 5%;
     margin-bottom: 5%;
 }
+
+.flashcards-cont{
+  overflow-y: auto;
+  max-height: 80%;
+}

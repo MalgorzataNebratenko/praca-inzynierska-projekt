@@ -1,41 +1,45 @@
-import React, { useState } from 'react';
-// import Navbar from 'react-bootstrap/Navbar';
-// import Nav from 'react-bootstrap/Nav';
-// import Dropdown from 'react-bootstrap/Dropdown';
-// import Button from 'react-bootstrap/Button';
+import React, { useState, useEffect, useContext } from 'react';
 import { Navbar, Container, Button, Nav, Dropdown } from 'react-bootstrap';
 import { NavLink, useLocation } from 'react-router-dom';
 import logo from '../images/logo1.png';
 import '../App.css';
 import '../Global.css';
-// import { FaUser, FaSignOutAlt, FaFlag } from 'react-icons/fa'; // Importuj odpowiednie ikony
 import userIcon from '../images/user-icon.png';
+import { UserContext } from '../App.js';
+import { ClientContext } from '../App.js';
 
-function Header({ submitLogout }) {
+function Header() {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showLanguageCourseMenu, setShowLanguageCourseMenu] = useState(false);
     const location = useLocation();
-    const [currentUser, setCurrentUser] = useState();
+    const [user, setUser] = useState();
+    const {setCurrentUser } = useContext(UserContext);
+    const {client} = useContext(ClientContext);
 
     const isLoginPage = location.pathname === '/login';
     const isRegisterPage = location.pathname === '/register';
-    // const username = currentUser ? currentUser.username : '';
+    const username = user ? user.username : '';
 
-    // useEffect(() => {
-    //   const fetchCurrentUser = async () => {
-    //     try {
-    //       const response = await client.get("/api/user");
-    //       setCurrentUser(response.data);
-    //     } catch (error) {
-    //       setCurrentUser(null); // Ustaw null, aby oznaczyć, że nie ma zalogowanego użytkownika
-    //     }
-    //   };
+    useEffect(() => {
+      const fetchCurrentUser = async () => {
+        try {
+          const response = await client.get("/api/user",
+          {
+            mode: 'cors',
+            credentials: 'include'
+          });
+          console.log("Response from /api/user:", response.data);
+          setUser(response.data);
+        } catch (error) {
+          setUser(null); // Ustaw null, aby oznaczyć, że nie ma zalogowanego użytkownika
+        }
+      };
     
-    //   // Wywołaj funkcję fetchCurrentUser tylko jeśli jesteśmy na stronie zalogowanego użytkownika
-    //   if (!isLoginPage && !isRegisterPage) {
-    //     fetchCurrentUser();
-    //   }
-    // }, [isLoginPage, isRegisterPage]);
+      // Wywołaj funkcję fetchCurrentUser tylko jeśli jesteśmy na stronie zalogowanego użytkownika
+      if (!isLoginPage && !isRegisterPage) {
+        fetchCurrentUser();
+      }
+    }, [isLoginPage, isRegisterPage]);
 
     const handleUserMenuToggle = () => {
       setShowUserMenu(!showUserMenu);
@@ -44,13 +48,25 @@ function Header({ submitLogout }) {
     const handleLanguageCourseMenu = () => {
       setShowLanguageCourseMenu(!showLanguageCourseMenu);
     }
+
+    const submitLogout = (e) => {
+      e.preventDefault();
+      client.post(
+        "/api/logout",
+        {
+          mode: 'cors',
+          credentials: 'include'
+        }).then(function (res) {
+        setCurrentUser(false);
+      });
+    };
     
     return (
       <div id='App-layout'>
         <Navbar bg="dark" variant="dark">
         <Container>
         <Navbar.Brand>
-        <NavLink to="/home" style={{ textDecoration: 'none' }}>
+        <NavLink to="/" style={{ textDecoration: 'none' }}>
         <img
                 src={logo}
                 height="35"
@@ -66,9 +82,9 @@ function Header({ submitLogout }) {
             <>
           {/* Navbar z 3 opcjami: Lekcje, Fiszki, About */}
           <Nav className="mr-auto">
-            <Nav.Link className="nav-link" href="#lessons">Lekcje</Nav.Link>
-            <Nav.Link className="nav-link" href="#flashcards">Fiszki</Nav.Link>
-            <Nav.Link className="nav-link" href="#about">About</Nav.Link>
+            <NavLink className="nav-link" to="/lessons">Lekcje</NavLink>
+            <NavLink className="nav-link" to="/flashcards">Fiszki</NavLink>
+            <NavLink className="nav-link" to="/about">About</NavLink>
           </Nav>
     
           {/* Logo użytkownika i navbar pionowy po najechaniu */}
@@ -77,14 +93,17 @@ function Header({ submitLogout }) {
             onMouseEnter={handleUserMenuToggle}
             onMouseLeave={handleUserMenuToggle}
           >
-            <Dropdown.Toggle className="dropdown-toggle" variant="secondary">
-              <img src={userIcon} />{' Nazwa użytkownika'}
+            <Dropdown.Toggle className="dropdown-toggle" variant="secondary" style={{ display: 'flex', alignItems: 'center' }}>
+              <img src={userIcon} style={{marginRight: '3px'}}/>
+              <div style={{ fontSize: '18px' }}>
+                {user ? user.user.username : 'Loading...'}
+              </div>
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              <Dropdown.Item href="#profil">Profil</Dropdown.Item>
-              <Dropdown.Item href="#statystyki">Statystyki</Dropdown.Item>
-              <Dropdown.Item href="#moje-jezyki">Moje Języki</Dropdown.Item>
-              <Dropdown.Item href="#ustawienia">Ustawienia</Dropdown.Item>
+              <Dropdown.Item as={NavLink} to="/profile">Profil</Dropdown.Item>
+              <Dropdown.Item as={NavLink} to="/stats">Statystyki</Dropdown.Item>
+              <Dropdown.Item as={NavLink} to="/my-languages">Moje Języki</Dropdown.Item>
+              <Dropdown.Item as={NavLink} to="/settings">Ustawienia</Dropdown.Item>
               {/* <Dropdown.Item href="#wyloguj"><FaSignOutAlt /> Wyloguj</Dropdown.Item> */}
             </Dropdown.Menu>
           </Dropdown>

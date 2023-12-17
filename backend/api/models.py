@@ -34,3 +34,32 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
 	objects = AppUserManager()
 	def __str__(self):
 		return self.username
+	
+
+class Deck(models.Model):
+	deck_id = models.AutoField(primary_key=True)
+	user = models.ForeignKey(AppUser, on_delete=models.CASCADE, null=False)
+	name = models.CharField(max_length= 200)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	def __str__(self):
+		return self.name
+	
+
+class Card(models.Model):
+	card_id = models.AutoField(primary_key=True)
+	deck = models.ForeignKey(Deck, on_delete=models.CASCADE, null=False)
+	front = models.TextField(null=False)
+	back = models.TextField(null=False)
+	viewed = models.IntegerField(null=True, blank=True, default=0)
+	correct_answers = models.IntegerField(null=True, blank=True, default=0)
+	wrong_answers = models.IntegerField(null=True, blank=True, default=0)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	def __str__(self):
+		return self.front
+	
+	# class Meta:
+	# 	ordering = ["created_at"]
+
+	

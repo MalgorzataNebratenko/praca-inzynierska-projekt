@@ -7,23 +7,14 @@ import logo from '../images/logo1.png';
 import '../App.css';
 import '../Global.css';
 import Header from '../components/Header';
+import Cookies from 'js-cookie';
 
-const HomePage = ({client, setCurrentUser }) => {
-  const submitLogout = (e) => {
-    e.preventDefault();
-    client.post(
-      "/api/logout",
-      {
-        mode: 'cors',
-        credentials: 'include'
-      }).then(function (res) {
-      setCurrentUser(false);
-    });
-  };
-
+const HomePage = () => {
+  const csrfToken = Cookies.get('csrftoken');
+  console.log('CSRF Token:', csrfToken);
   return (
     <div>
-    <Header submitLogout={submitLogout}></Header>
+    <Header></Header>
       <div className="center">
         <h2>You're logged in!</h2>
       </div>
