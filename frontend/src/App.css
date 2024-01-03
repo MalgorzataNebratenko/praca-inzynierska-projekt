@@ -67,3 +67,99 @@ span.input-group-addon {
   overflow-y: auto;
   max-height: 80%;
 }
+
+.tabs-settings .nav-link:not(.active){
+  color: #f19c51;
+}
+
+.decks-container{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Automatycznie dopasowuje do szerokości, min. 200px, maks. 1fr szerokości */
+    gap: 16px; /* Odstęp między elementami w siatce */
+    justify-content: center; /* Centrowanie siatki */
+    margin-top: 5%;
+    max-width: 80%;
+}
+
+.flip-card {
+  background-color: transparent;
+  width: 300px;
+  height: 200px;
+  /* border: 1px solid #f1f1f1; */
+  perspective: 1000px; /* Remove this if you don't want the 3D effect */
+  border-radius: 15px;
+  /* padding: 15px; */
+  box-shadow: 0 0 100px rgba(161, 161, 161, 0.3);
+  /* max-width: 200px; */
+  /* color: rgba(37, 37, 37); */
+  /* margin-top: 5%; */
+  text-align: center;
+}
+
+/* This container is needed to position the front and back side */
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.4s;
+  transform-style: preserve-3d;
+}
+
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+/* Position the front and back side */
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden; /* Safari */
+  backface-visibility: hidden;
+
+  border-radius: 15px;
+  /* padding: 15px; */
+  box-shadow: 0 0 100px rgba(37, 37, 37, 0.3);
+}
+
+/* Style the front side (fallback if image is missing) */
+.flip-card-front {
+  background-color: #f8f9fa;
+  color: rgba(37, 37, 37);
+}
+
+/* Style the back side */
+.flip-card-back {
+  background-color: #f19c51;
+  color: white;
+  transform: rotateY(180deg);
+}
+
+.controls button {
+  background-color: transparent; /* Ustaw kolor tła na przezroczysty */
+  border: none; /* Usuń obramowanie */
+  cursor: pointer; /* Dodaj kursor wskazujący na przycisk */
+  outline: none; /* Usuń domyślne obramowanie po kliknięciu */
+}
+
+.controls img {
+  display: block; /* Usuń domyślne marginesy dla obrazka */
+  margin: 0 auto; /* Wyśrodkuj obrazek wewnątrz przycisku */
+}
+
+.controls{
+  margin-top: 40px;
+  display: flex;
+  flex-direction: row;
+  gap: 50px;
+}
+
+.flashcard-review-containter{
+  margin-top: 30px;
+  width: 90%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}

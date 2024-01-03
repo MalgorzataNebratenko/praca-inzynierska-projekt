@@ -35,6 +35,17 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
 	def __str__(self):
 		return self.username
 	
+class Settings(models.Model):
+    user = models.OneToOneField(
+        'AppUser', related_name='settings', on_delete=models.CASCADE
+    )
+    display_nationality = models.BooleanField(default=True)
+    daily_goal = models.IntegerField(default=40)
+    public_account = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Settings for {self.user.username}"
+	
 
 class Deck(models.Model):
 	deck_id = models.AutoField(primary_key=True)
@@ -62,4 +73,11 @@ class Card(models.Model):
 	# class Meta:
 	# 	ordering = ["created_at"]
 
-	
+class AvailableCourse(models.Model):
+	course_id = models.AutoField(primary_key=True)
+	display_name = models.CharField(max_length= 100)
+	course_type = models.CharField(max_length= 100)
+	code = models.CharField(max_length=5)
+
+	def __str__(self):
+		return self.display_name

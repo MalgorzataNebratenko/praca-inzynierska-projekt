@@ -28,31 +28,33 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-CORS_ALLOW_HEADERS = [
-    'Accept',
-    'Accept-Language',
-    'Content-Language',
-    'Content-Type',  # Add this line
-    'X-CSRFToken',   # Add this line
-]
+# CORS_ALLOW_HEADERS = [
+#     'Accept',
+#     'Accept-Language',
+#     'Content-Language',
+#     'Content-Type',  # Add this line
+#     'X-CSRFToken',   # Add this line
+# ]
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost',
-    'http://127.0.0.1',
-    'http://0.0.0.0',
+    'https://localhost',
+    'https://127.0.0.1',
+    'https://0.0.0.0',
     "http://localhost:3000",
-    'http://10.3.92.175:3000',
+    'https://127.0.0.1:8000',
+    "https://localhost:8000",
+    'https://10.3.92.175:3000',
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
-]
+# CSRF_TRUSTED_ORIGINS = [
+#     'http://localhost:3000',
+# ]
 # ALLOWED_HOSTS = [
 #     'localhost:3000',
 # ]
-CORS_ORIGIN_WHITELIST = [
-    'http://localhost:3000',
-]
+# CORS_ORIGIN_WHITELIST = [
+#     'http://localhost:3000',
+# ]
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = True
@@ -67,13 +69,13 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Ustawienia CSRF
 CSRF_COOKIE_SECURE = True
 CSRF_COOKIE_SAMESITE = 'None'  # 'None' dla cross-origin requests
-CSRF_COOKIE_HTTPONLY = False
 
 SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = 'None'
-SESSION_COOKIE_HTTPONLY = False
+# SESSION_COOKIE_SAMESITE = 'Lax'
+# SESSION_COOKIE_HTTPONLY = False
 
-CORS_ALLOW_HEADERS = ['X-CSRFToken']
+# CORS_ALLOW_HEADERS = ['X-CSRFToken']
 
 # CSRF_COOKIE_SECURE = False
 # CSRF_COOKIE_SAMESITE = 'none'
@@ -90,6 +92,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'api.apps.ApiConfig',
+    "django_extensions",
 ]
 
 MIDDLEWARE = [

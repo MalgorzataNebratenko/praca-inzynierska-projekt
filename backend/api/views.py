@@ -3,11 +3,11 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.response import Response
-from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, DestroyAPIView,RetrieveUpdateAPIView
-from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerializer, UserDeleteSerializer, DeckSerializer, CardSerializer,DeckEditSerializer,CardCreateSerializer
+from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, DestroyAPIView,RetrieveUpdateAPIView, UpdateAPIView
+from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerializer, UserDeleteSerializer, DeckSerializer, CardSerializer,DeckEditSerializer,CardCreateSerializer,UserUpdateSerializer, SettingsSerializer, AvailableCourseSerializer
 from rest_framework import permissions, status
 from .validations import custom_validation, validate_email, validate_password
-from .models import Deck
+from .models import Deck, AvailableCourse, Card
 from rest_framework.decorators import action
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
@@ -96,45 +96,98 @@ class UserView(APIView):
 	
 # @method_decorator(csrf_protect, name="dispatch")
 class UserDeleteView(APIView):
-	permission_classes = (permissions.IsAuthenticated,)
-	# permission_classes = (permissions.AllowAny,)
-	authentication_classes = (SessionAuthentication,)
+    # permission_classes = (permissions.IsAuthenticated,)
+    # authentication_classes = (SessionAuthentication,)
 
-	def delete(self, request, format=None):
-		logger.info(f"DELETE request received: {request}")
-		user = self.request.user
-		try:
-			# Pobierz obiekt użytkownika
-			user = get_user_model().objects.get(pk=user)
-			
-			# Usuń użytkownika
-			user.delete()
+    def delete(self, request, format=None):
+        logger.info(f"DELETE request received: {request}")
+        user = self.request.user
+        try:
+            # Pobierz obiekt użytkownika
+            user = get_user_model().objects.get(pk=user.pk)
+            
+            # Usuń użytkownika
+            user.delete()
 
-			# Wyloguj użytkownika po usunięciu
-			logout(request)
+            # Wyloguj użytkownika po usunięciu
+            logout(request)
 
-			return Response({'detail': 'User deleted successfully'}, status=status.HTTP_200_OK)
-		except Exception as e:
-			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'detail': 'User deleted successfully'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+		
+class UserUpdateView(UpdateAPIView):
+    serializer_class = UserUpdateSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (SessionAuthentication,)
+
+    def get_object(self):
+        return self.request.user
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        
+        new_password = serializer.validated_data.get('password')
+        if new_password:
+            instance.set_password(new_password)
+        
+        new_username = serializer.validated_data.get('username')
+        if new_username:
+            instance.username = new_username
+        
+        instance.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class CreateSettingsView(CreateAPIView):
+    serializer_class = SettingsSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class UpdateSettingsView(RetrieveUpdateAPIView):
+    serializer_class = SettingsSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_object(self):
+        return self.request.user.settings
+
+    def patch(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 	
+class SettingsView(RetrieveAPIView):
+    serializer_class = SettingsSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_object(self):
+        # Retrieve the user's settings
+        return self.request.user.settings
+
+    def get(self, request, *args, **kwargs):
+        # Override the default get method to add any additional logic
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 class DeckDetailView(RetrieveAPIView):
     queryset = Deck.objects.all()
     serializer_class = DeckSerializer
-	
-# class DeckCreateView(CreateAPIView):
-# 	serializer_class = DeckSerializer
-# 	permission_classes = (permissions.IsAuthenticated,)
-# 	authentication_classes = (SessionAuthentication,)
 
-# 	def post(self, request):
-# 		serializer = self.get_serializer(data=request.data)
-# 		serializer.is_valid(raise_exception=True)
+class UserDecksView(ListAPIView):
+    serializer_class = DeckSerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
-# 		# Ustaw id użytkownika i zapisz deck
-# 		serializer.validated_data['user'] = request.data.get("user")
-# 		queryset = serializer.save()
-
-# 		return Response(self.get_serializer(queryset).data, status=status.HTTP_201_CREATED)
+    def get_queryset(self):
+        user = self.request.user
+        return Deck.objects.filter(user=user)
 
 class IsOwnerOfDeck(permissions.BasePermission):
     message = 'You do not have permission to access this deck.'
@@ -146,7 +199,7 @@ class IsOwnerOfDeck(permissions.BasePermission):
 
 class DeckCreateView(CreateAPIView):
 	serializer_class = DeckSerializer
-	permission_classes = (permissions.IsAuthenticated,)
+	# permission_classes = (permissions.IsAuthenticated,)
 
 	def post(self, request, *args, **kwargs):
 		user = request.data.get("user")
@@ -206,8 +259,26 @@ class CardCreateView(CreateAPIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'detail': 'Flashcards added successfully'}, status=status.HTTP_201_CREATED)
+    
+# class FlashcardListView(ListAPIView):
+#     serializer_class = CardSerializer
+#     permission_classes = (permissions.IsAuthenticated, IsOwnerOfDeck)
 
+#     def get_queryset(self):
+#         deck_id = self.kwargs['deck_id']
+#         deck = get_object_or_404(Deck, id=deck_id, user=self.request.user)
+#         return Card.objects.filter(deck=deck)
 
+class AvailableCourseCreateView(CreateAPIView):
+    serializer_class = AvailableCourseSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+class AvailableCourseListView(ListAPIView):
+    queryset = AvailableCourse.objects.all()
+    serializer_class = AvailableCourseSerializer
 
 # class DeckViewSet(viewsets.ModelViewSet):
 

@@ -1,152 +1,210 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Navbar, Container, Button, Nav, Dropdown } from 'react-bootstrap';
-import { NavLink, useLocation } from 'react-router-dom';
-import logo from '../images/logo1.png';
-import '../App.css';
-import '../Global.css';
-import userIcon from '../images/user-icon.png';
-import { UserContext } from '../App.js';
-import { ClientContext } from '../App.js';
+import React, { useState, useEffect, useContext } from "react";
+import { Navbar, Container, Button, Nav, Dropdown } from "react-bootstrap";
+import { NavLink, useLocation } from "react-router-dom";
+import logo from "../images/logo1.png";
+import "../App.css";
+import "../Global.css";
+import userIcon from "../images/user-icon.png";
+import { UserContext } from "../App.js";
+import { ClientContext } from "../App.js";
+import FlagIcon from "../FlagIcon";
 
 function Header() {
-    const [showUserMenu, setShowUserMenu] = useState(false);
-    const [showLanguageCourseMenu, setShowLanguageCourseMenu] = useState(false);
-    const location = useLocation();
-    const [user, setUser] = useState();
-    const {setCurrentUser } = useContext(UserContext);
-    const {client} = useContext(ClientContext);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showLanguageCourseMenu, setShowLanguageCourseMenu] = useState(false);
+  const location = useLocation();
+  const [user, setUser] = useState();
+  const { setCurrentUser } = useContext(UserContext);
+  const { client } = useContext(ClientContext);
+  const [languages, setLanguages] = useState([]);
 
-    const isLoginPage = location.pathname === '/login';
-    const isRegisterPage = location.pathname === '/register';
-    const username = user ? user.username : '';
+  const isLoginPage = location.pathname === "/login";
+  const isRegisterPage = location.pathname === "/register";
+  const username = user ? user.username : "";
 
-    useEffect(() => {
-      const fetchCurrentUser = async () => {
-        try {
-          const response = await client.get("/api/user",
-          {
-            mode: 'cors',
-            credentials: 'include'
-          });
-          console.log("Response from /api/user:", response.data);
-          setUser(response.data);
-        } catch (error) {
-          setUser(null); // Ustaw null, aby oznaczyć, że nie ma zalogowanego użytkownika
-        }
-      };
-    
-      // Wywołaj funkcję fetchCurrentUser tylko jeśli jesteśmy na stronie zalogowanego użytkownika
-      if (!isLoginPage && !isRegisterPage) {
-        fetchCurrentUser();
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await client.get("/api/user", {
+          mode: "cors",
+          credentials: "include",
+        });
+        console.log("Response from /api/user:", response.data);
+        setUser(response.data);
+      } catch (error) {
+        setUser(null); // Ustaw null, aby oznaczyć, że nie ma zalogowanego użytkownika
       }
-    }, [isLoginPage, isRegisterPage]);
+    };
 
-    const handleUserMenuToggle = () => {
-      setShowUserMenu(!showUserMenu);
+    // Wywołaj funkcję fetchCurrentUser tylko jeśli jesteśmy na stronie zalogowanego użytkownika
+    if (!isLoginPage && !isRegisterPage) {
+      fetchCurrentUser();
     }
+  }, [isLoginPage, isRegisterPage]);
 
-    const handleLanguageCourseMenu = () => {
-      setShowLanguageCourseMenu(!showLanguageCourseMenu);
-    }
+  useEffect(() => {
+    const fetchLanguages = async () => {
+      try {
+        const response = await client.get("/api/courses/");
+        setLanguages(response.data);
+      } catch (error) {
+        console.error("Error fetching languages:", error);
+      }
+    };
 
-    const submitLogout = (e) => {
-      e.preventDefault();
-      client.post(
-        "/api/logout",
-        {
-          mode: 'cors',
-          credentials: 'include'
-        }).then(function (res) {
+    fetchLanguages();
+  }, []);
+
+  const handleUserMenuToggle = () => {
+    setShowUserMenu(!showUserMenu);
+  };
+
+  const handleLanguageCourseMenu = () => {
+    setShowLanguageCourseMenu(!showLanguageCourseMenu);
+  };
+
+  const submitLogout = (e) => {
+    e.preventDefault();
+    client
+      .post("/api/logout", {
+        mode: "cors",
+        credentials: "include",
+      })
+      .then(function (res) {
         setCurrentUser(false);
       });
-    };
-    
-    return (
-      <div id='App-layout'>
-        <Navbar bg="dark" variant="dark">
+  };
+
+  return (
+    <div id="App-layout">
+      <Navbar bg="dark" variant="dark">
         <Container>
-        <Navbar.Brand>
-        <NavLink to="/" style={{ textDecoration: 'none' }}>
-        <img
+          <Navbar.Brand>
+            <NavLink to="/" style={{ textDecoration: "none" }}>
+              <img
                 src={logo}
                 height="35"
                 className="d-inline-block align-top"
                 alt="Linguastine Logo"
-                
-                />{' '}
-                <h3 className="logo-text d-inline-block fontKingAndQueen">Linguastine</h3>
-          </NavLink>
+              />{" "}
+              <h3 className="logo-text d-inline-block fontKingAndQueen">
+                Linguastine
+              </h3>
+            </NavLink>
           </Navbar.Brand>
-    
+
           {!isLoginPage && !isRegisterPage && (
             <>
-          {/* Navbar z 3 opcjami: Lekcje, Fiszki, About */}
-          <Nav className="mr-auto">
-            <NavLink className="nav-link" to="/lessons">Lekcje</NavLink>
-            <NavLink className="nav-link" to="/flashcards">Fiszki</NavLink>
-            <NavLink className="nav-link" to="/about">About</NavLink>
-          </Nav>
-    
-          {/* Logo użytkownika i navbar pionowy po najechaniu */}
-          <Dropdown
-            show={showUserMenu}
-            onMouseEnter={handleUserMenuToggle}
-            onMouseLeave={handleUserMenuToggle}
-          >
-            <Dropdown.Toggle className="dropdown-toggle" variant="secondary" style={{ display: 'flex', alignItems: 'center' }}>
-              <img src={userIcon} style={{marginRight: '3px'}}/>
-              <div style={{ fontSize: '18px' }}>
-                {user ? user.user.username : 'Loading...'}
-              </div>
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item as={NavLink} to="/profile">Profil</Dropdown.Item>
-              <Dropdown.Item as={NavLink} to="/stats">Statystyki</Dropdown.Item>
-              <Dropdown.Item as={NavLink} to="/my-languages">Moje Języki</Dropdown.Item>
-              <Dropdown.Item as={NavLink} to="/settings">Ustawienia</Dropdown.Item>
-              {/* <Dropdown.Item href="#wyloguj"><FaSignOutAlt /> Wyloguj</Dropdown.Item> */}
-            </Dropdown.Menu>
-          </Dropdown>
-    
-          {/* Miejsce na flagę danego kraju i navbar pionowy po najechaniu */}
-          <Dropdown
-            show={showLanguageCourseMenu}
-            onMouseEnter={handleLanguageCourseMenu}
-            onMouseLeave={handleLanguageCourseMenu}
-          >
-            <Dropdown.Toggle variant="secondary">
-              {/* <FaFlag />{' Język'} */}
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              <Dropdown.Item href="#jezyk1">Język 1</Dropdown.Item>
-              <Dropdown.Item href="#jezyk2">Język 2</Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
-    
-          {/* Przycisk Wyloguj */}
+              {/* Navbar z 3 opcjami: Lekcje, Fiszki, About */}
+              <Nav className="mr-auto">
+                <NavLink className="nav-link" to="/lessons">
+                  Lekcje
+                </NavLink>
+                <NavLink className="nav-link" to="/flashcards">
+                  Fiszki
+                </NavLink>
+                <NavLink className="nav-link" to="/about">
+                  O aplikacji
+                </NavLink>
+              </Nav>
+
+              {/* Logo użytkownika i navbar pionowy po najechaniu */}
+              <Dropdown
+                show={showUserMenu}
+                onMouseEnter={handleUserMenuToggle}
+                onMouseLeave={handleUserMenuToggle}
+              >
+                <Dropdown.Toggle
+                  className="dropdown-toggle"
+                  variant="secondary"
+                  style={{ display: "flex", alignItems: "center" }}
+                >
+                  <img src={userIcon} style={{ marginRight: "3px" }} />
+                  <div style={{ fontSize: "18px" }}>
+                    {user ? user.user.username : "Loading..."}
+                  </div>
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                  <Dropdown.Item as={NavLink} to="/profile">
+                    Profil
+                  </Dropdown.Item>
+                  <Dropdown.Item as={NavLink} to="/stats">
+                    Statystyki
+                  </Dropdown.Item>
+                  <Dropdown.Item as={NavLink} to="/settings">
+                    Ustawienia
+                  </Dropdown.Item>
+                  {/* <Dropdown.Item href="#wyloguj"><FaSignOutAlt /> Wyloguj</Dropdown.Item> */}
+                </Dropdown.Menu>
+              </Dropdown>
+
+              {/* Miejsce na flagę danego kraju i navbar pionowy po najechaniu */}
+              <Dropdown
+                show={showLanguageCourseMenu}
+                onMouseEnter={handleLanguageCourseMenu}
+                onMouseLeave={handleLanguageCourseMenu}
+              >
+                <Dropdown.Toggle variant="secondary">
+                  {/* <FaFlag />{' Język'} */}
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                  {languages.map(({ id, display_name, code }) => (
+                    <Dropdown.Item key={id} href={`#language-${id}`}>
+                      <FlagIcon code={code} /> {display_name}
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              </Dropdown>
+
+              {/* Przycisk Wyloguj */}
               <Navbar.Text>
-                <form onSubmit={e => submitLogout(e)}>
-                  <Button type="submit" className="btn btn-warning btn-rounded" data-mdb-ripple-color="#ffffff" style={{backgroundColor:'#f19c51', border:'none'}}>Log out</Button>
+                <form onSubmit={(e) => submitLogout(e)}>
+                  <Button
+                    type="submit"
+                    className="btn btn-warning btn-rounded"
+                    data-mdb-ripple-color="#ffffff"
+                    style={{ backgroundColor: "#f19c51", border: "none" }}
+                  >
+                    Wyloguj się
+                  </Button>
                 </form>
               </Navbar.Text>
-              </>
+            </>
           )}
-          {(isLoginPage) && (
+          {isLoginPage && (
             <Nav>
               {/* <Nav.Link  className="nav-link">Register</Nav.Link> */}
-              <Button type="button" as={NavLink} to="/register" className="btn btn-warning btn-rounded" data-mdb-ripple-color="#ffffff" style={{backgroundColor:'#f19c51', border:'none'}}>Register</Button>
+              <Button
+                type="button"
+                as={NavLink}
+                to="/register"
+                className="btn btn-warning btn-rounded"
+                data-mdb-ripple-color="#ffffff"
+                style={{ backgroundColor: "#f19c51", border: "none" }}
+              >
+                Zarejestruj się
+              </Button>
             </Nav>
           )}
-          {(isRegisterPage) && (
+          {isRegisterPage && (
             <Nav>
               {/* <Nav.Link as={NavLink} to="/login" className="nav-link">Login</Nav.Link> */}
-              <Button type="button" as={NavLink} to="/login" className="btn btn-warning btn-rounded" data-mdb-ripple-color="#ffffff" style={{backgroundColor:'#f19c51', border:'none'}}>Login</Button>
+              <Button
+                type="button"
+                as={NavLink}
+                to="/login"
+                className="btn btn-warning btn-rounded"
+                data-mdb-ripple-color="#ffffff"
+                style={{ backgroundColor: "#f19c51", border: "none" }}
+              >
+                Zaloguj się
+              </Button>
             </Nav>
           )}
-          </Container>
-        </Navbar>
-        </div>
-      );
+        </Container>
+      </Navbar>
+    </div>
+  );
 }
 
 export default Header;
