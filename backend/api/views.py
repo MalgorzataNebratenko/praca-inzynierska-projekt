@@ -4,14 +4,15 @@ from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, DestroyAPIView,RetrieveUpdateAPIView, UpdateAPIView
-from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerializer, UserDeleteSerializer, DeckSerializer, CardSerializer,DeckEditSerializer,CardCreateSerializer,UserUpdateSerializer, SettingsSerializer, AvailableCourseSerializer
+from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerializer, UserDeleteSerializer, DeckSerializer, CardSerializer,DeckEditSerializer,CardCreateSerializer,UserUpdateSerializer, SettingsSerializer, AvailableCourseSerializer, UserLoginHistorySerializer, StatsSerializer
 from rest_framework import permissions, status
 from .validations import custom_validation, validate_email, validate_password
-from .models import Deck, AvailableCourse, Card
+from .models import Deck, AvailableCourse, Card, UserLoginHistory, Stats
 from rest_framework.decorators import action
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect, csrf_exempt
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 import logging
 
@@ -142,11 +143,13 @@ class UserUpdateView(UpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class CreateSettingsView(CreateAPIView):
-    serializer_class = SettingsSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = (SessionAuthentication,)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+# @method_decorator(ensure_csrf_cookie, name='dispatch')
 
 class UpdateSettingsView(RetrieveUpdateAPIView):
     serializer_class = SettingsSerializer
@@ -155,6 +158,7 @@ class UpdateSettingsView(RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user.settings
 
+    @method_decorator(csrf_protect, name="dispatch")
     def patch(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
@@ -259,15 +263,6 @@ class CardCreateView(CreateAPIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'detail': 'Flashcards added successfully'}, status=status.HTTP_201_CREATED)
-    
-# class FlashcardListView(ListAPIView):
-#     serializer_class = CardSerializer
-#     permission_classes = (permissions.IsAuthenticated, IsOwnerOfDeck)
-
-#     def get_queryset(self):
-#         deck_id = self.kwargs['deck_id']
-#         deck = get_object_or_404(Deck, id=deck_id, user=self.request.user)
-#         return Card.objects.filter(deck=deck)
 
 class AvailableCourseCreateView(CreateAPIView):
     serializer_class = AvailableCourseSerializer
@@ -279,6 +274,99 @@ class AvailableCourseCreateView(CreateAPIView):
 class AvailableCourseListView(ListAPIView):
     queryset = AvailableCourse.objects.all()
     serializer_class = AvailableCourseSerializer
+
+class DeckFlashcardsView(ListAPIView):
+    serializer_class = CardSerializer
+    permission_classes = (permissions.IsAuthenticated, IsOwnerOfDeck)
+
+    def get_queryset(self):
+        deck_id = self.kwargs['pk']
+        return Card.objects.filter(deck_id=deck_id)
+    
+def add_login_history(request):
+    user = request.user
+    last_login_entry = UserLoginHistory.objects.filter(user=user).order_by('-login_date').first()
+
+    if last_login_entry and last_login_entry.login_date == timezone.now().date():
+        # Użytkownik już dzisiaj był zalogowany, nie dodawaj nowego wpisu
+        return Response({'detail': 'Already logged in today'}, status=status.HTTP_400_BAD_REQUEST)
+
+    UserLoginHistory.objects.create(user=user, login_date=timezone.now().date())
+    return Response({'detail': 'Login history added successfully'}, status=status.HTTP_201_CREATED)
+    
+class UserLoginHistoryListView(ListAPIView):
+    serializer_class = UserLoginHistorySerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        user = self.request.user
+        return UserLoginHistory.objects.filter(user=user)
+
+class UserLoginHistoryCreateView(CreateAPIView):
+    serializer_class = UserLoginHistorySerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def post(self, request, *args, **kwargs):
+        return add_login_history(request)
+
+class ConsecutiveLoginDaysView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        today = timezone.now().date()
+
+        # Pobierz historię logowań i dodaj informacje o poprzednich i następnych wpisach
+        login_history = UserLoginHistory.objects.filter(user=user).order_by('-login_date')
+
+        # Określ, ile dni pod rząd użytkownik był zalogowany
+        consecutive_days = self.calculate_consecutive_days(login_history, today)
+
+        # Jeśli to pierwszy dzień, zwróć 1, w przeciwnym razie zwróć ilość dni pod rząd
+        return Response({'consecutive_days': max(consecutive_days, 0)}, status=status.HTTP_200_OK)
+
+    def calculate_consecutive_days(self, login_history, today):
+        consecutive_days = 0
+
+        if login_history.exists():  # Sprawdź, czy istnieje historia logowań
+            for i in range(len(login_history) - 1):
+                if (login_history[i].login_date - login_history[i + 1].login_date).days == 1:
+                    consecutive_days += 1
+                else:
+                    break
+
+            # Sprawdź, czy ostatni login to dzisiaj
+            if login_history[0].login_date == today:
+                consecutive_days += 1
+        else:
+            # Brak historii logowań, użytkownik jeszcze się nie zalogował
+            consecutive_days = 0
+
+        return consecutive_days
+
+    
+class UpdateStatsView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    def post(self, request, *args, **kwargs):
+        xp = request.data.get('xp', 0)
+
+        if xp < 0:
+            return Response({'error': 'XP cannot be negative.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = self.request.user
+        stats, created = Stats.objects.get_or_create(user=user)
+
+        # Aktualizuj statystyki
+        stats.update_stats(xp)
+
+        # Serializuj obiekt Stats do JSON
+        serializer = StatsSerializer(stats)
+        serialized_data = serializer.data
+
+        return Response({'detail': 'Stats updated successfully', 'stats': serialized_data}, status=status.HTTP_200_OK)
 
 # class DeckViewSet(viewsets.ModelViewSet):
 

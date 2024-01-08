@@ -12,6 +12,7 @@ const FlashcardsLearnPage = () => {
   const { deckId } = useParams();
   const [deckDetails, setDeckDetails] = useState(null);
   const { client } = useContext(ClientContext);
+  const [flashcards, setFlashcards] = useState([]);
 
   useEffect(() => {
     // Pobierz szczegóły danego zestawu z API na podstawie deckId
@@ -23,17 +24,24 @@ const FlashcardsLearnPage = () => {
       .catch((error) => {
         console.error("Error fetching deck details:", error);
       });
-  }, [deckId]);
 
-  if (!deckDetails) {
+    // Pobierz fiszki powiązane z danym zestawem
+    client
+      .get(`/api/deck/${deckId}/flashcards/`)
+      .then((response) => {
+        setFlashcards(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching flashcards:", error);
+      });
+  }, [deckId, client]);
+
+  if (!deckDetails || !flashcards) {
     return <p>Loading...</p>;
   }
 
+
   return (
-    // <div>
-    //   <h2>{deckDetails.name}</h2>
-    //   {/* Wyświetl inne informacje o zestawie, np. fiszki, statystyki itp. */}
-    // </div>
     <div>
       <Header></Header>
       <div className="container-lg bg-dark bg-card">
@@ -42,28 +50,6 @@ const FlashcardsLearnPage = () => {
           style={{ display: "flex", flexDirection: "column" }}
         >
           <h2>{deckDetails.name}</h2>
-          {/* <div style={{ display: "flex", flexDirection: "row", gap: "30px" }}>
-            <Button
-                type="button"
-                as={NavLink}
-                to={`/flashcards/deck/${deckId}/learn`}
-                className="btn btn-warning btn-rounded"
-                data-mdb-ripple-color="#ffffff"
-                style={{ backgroundColor: "#f19c51", border: "none" }}
-            >
-                Ucz się
-            </Button>
-            <Button
-                type="button"
-                as={NavLink}
-                to={`/flashcards/deck/${deckId}/edit`}
-                className="btn btn-warning btn-rounded"
-                data-mdb-ripple-color="#ffffff"
-                style={{ backgroundColor: "#f19c51", border: "none" }}
-            >
-                Edytuj zestaw
-            </Button>
-          </div> */}
           <FlashcardExcersise deckId={deckId}></FlashcardExcersise>
         </div>
       </div>

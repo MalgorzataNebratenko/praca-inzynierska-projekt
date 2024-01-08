@@ -94,6 +94,7 @@ span.input-group-addon {
   /* color: rgba(37, 37, 37); */
   /* margin-top: 5%; */
   text-align: center;
+  cursor: pointer;
 }
 
 /* This container is needed to position the front and back side */
@@ -136,6 +137,15 @@ span.input-group-addon {
   transform: rotateY(180deg);
 }
 
+.flip-card p {
+  margin: 0; /* Resetuj domyślne marginesy dla <p> */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 22px;
+}
+
 .controls button {
   background-color: transparent; /* Ustaw kolor tła na przezroczysty */
   border: none; /* Usuń obramowanie */
@@ -162,4 +172,36 @@ span.input-group-addon {
   justify-content: center;
   align-items: center;
   flex-direction: column;
+}
+
+.separator-style{
+  width: 2px;
+  height: 20px;
+  background-color: #1d1d1d;
+  /* margin: 0 10px; */
+}
+
+.flashcard-style{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 2px;
+  margin: 10px 0;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  width: 400px;
+  color: rgba(37, 37, 37);
+};
+
+.react-calendar__tile--active {
+  background-color: white !important;
+}
+
+.login-day {
+  background-color: green !important;
+  border-radius: 50%;
+  height: 8px;
+  width: 8px;
 }

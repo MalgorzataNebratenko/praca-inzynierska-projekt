@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.utils import timezone
 
 class AppUserManager(BaseUserManager):
 	def create_user(self, email, password=None, **extra_fields):
@@ -81,3 +82,75 @@ class AvailableCourse(models.Model):
 
 	def __str__(self):
 		return self.display_name
+	
+class Stats(models.Model):
+	user = models.OneToOneField(
+        'AppUser', related_name='stats', on_delete=models.CASCADE
+    )
+	daily_xp = models.IntegerField(null=True, blank=True, default=0)
+	weekly_xp = models.IntegerField(null=True, blank=True, default=0)
+	monthly_xp = models.IntegerField(null=True, blank=True, default=0)
+	total_xp = models.IntegerField(null=True, blank=True, default=0)
+	last_reviewed_language_code = models.CharField(max_length=5, default="gb")
+
+	def update_stats(self, xp):
+		self.daily_xp += xp
+		self.weekly_xp += xp
+		self.monthly_xp += xp
+		self.total_xp += xp
+
+		self.save()
+
+	def __str__(self):
+		return f"Stats for {self.user.username}"
+	
+class UserLoginHistory(models.Model):
+    user = models.ForeignKey(AppUser, on_delete=models.CASCADE, null=False)
+    login_date = models.DateField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.login_date}"
+	
+# class BaseUnits(models.Model):
+# 	units_id = models.AutoField(primary_key=True)
+# 	name = models.CharField(max_length=100)
+# 	description = models.TextField()
+# 	course = models.ForeignKey(AvailableCourse, on_delete=models.CASCADE, null=False)
+# 	completed = models.BooleanField(default=False)
+# 	unlocked = models.BooleanField(default=False)
+
+# 	class Meta:
+# 		abstract = True  # Oznacza, że to jest model abstrakcyjny i nie będzie miał swojej własnej tabeli w bazie danych
+
+# class PolishEnglishUnits(BaseUnits):
+#     class Meta:
+#         db_table = 'polish_english_units'
+
+# class PolishSpanishUnits(BaseUnits):
+#     class Meta:
+#         db_table = 'polish_spanish_units'
+
+# class BaseUnits(models.Model):
+# 	units_id = models.AutoField(primary_key=True)
+# 	name = models.CharField(max_length=100)
+# 	description = models.TextField()
+# 	course = models.ForeignKey(AvailableCourse, on_delete=models.CASCADE, null=False)
+# 	completed = models.BooleanField(default=False)
+# 	unlocked = models.BooleanField(default=False)
+
+# 	class Meta:
+# 		abstract = True  # Oznacza, że to jest model abstrakcyjny i nie będzie miał swojej własnej tabeli w bazie danych
+
+# class PolishEnglishUnits(BaseUnits):
+#     class Meta:
+#         db_table = 'polish_english_units'
+
+# class PolishSpanishUnits(BaseUnits):
+#     class Meta:
+#         db_table = 'polish_spanish_units'
+	
+class Test(models.Model):
+	test = models.DateField(default=timezone.now)
+
+	def __str__(self):
+		return self.test

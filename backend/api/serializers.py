@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from django.core.exceptions import ValidationError
-from .models import Deck, Card, Settings, AvailableCourse
+from .models import Deck, Card, Settings, AvailableCourse, UserLoginHistory, Stats
 
 UserModel = get_user_model()
 
@@ -90,3 +90,14 @@ class AvailableCourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = AvailableCourse
         fields = '__all__'
+
+class UserLoginHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserLoginHistory
+        fields = ['id', 'user', 'login_date']
+        read_only_fields = ['user', 'login_date']
+
+class StatsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Stats
+        fields = ('daily_xp', 'weekly_xp', 'monthly_xp', 'total_xp', 'last_reviewed_language_code')

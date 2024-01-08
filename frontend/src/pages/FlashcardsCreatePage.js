@@ -14,7 +14,7 @@ import NewFlashcard from "../components/NewFlashcard";
 import { UserContext } from "../App.js";
 import { ClientContext } from "../App.js";
 import Cookies from "js-cookie";
-import CSRFToken from "../components/CSRFToken.js";
+// import CSRFToken from "../components/CSRFToken.js";
 
 const FlashcardsCreatePage = () => {
   const [setName, setSetName] = useState("");
@@ -50,7 +50,7 @@ const FlashcardsCreatePage = () => {
         });
         console.log("Response from /api/user:", response.data);
         setUser(response.data);
-        setCurrentUser(response.data); // Ustaw aktualnego użytkownika w kontekście (jeśli to jest potrzebne)
+        setCurrentUser(response.data); // Ustaw aktualnego użytkownika w kontekście
       } catch (error) {
         setUser(null); // Ustaw null, aby oznaczyć, że nie ma zalogowanego użytkownika
       }
@@ -161,7 +161,6 @@ const FlashcardsCreatePage = () => {
 
         {/* Pole do wprowadzania nazwy zestawu */}
         <Form onSubmit={saveDeck}>
-          <CSRFToken />
           <Form.Group className="mb-3" controlId="formSetName">
             <Form.Label style={{ fontSize: "20px" }}>Set Deck Name</Form.Label>
             <Form.Control

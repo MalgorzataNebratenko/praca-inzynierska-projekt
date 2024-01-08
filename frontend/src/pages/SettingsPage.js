@@ -19,8 +19,36 @@ const SettingsPage = () => {
   const [displayNationality, setDisplayNationality] = useState(false);
   const [dailyGoal, setDailyGoal] = useState("");
   const [publicAccount, setPublicAccount] = useState(false);
+  const [csrfToken, setCsrftoken] = useState("");
+
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].toString().replace(/^([\s]*)|([\s]*)$/g, "");
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const getCsrfToken = () => {
+  // Funkcja szukająca ciasteczka i ustawiająca stan
+  const csrfToken = getCookie("csrftoken");
+  console.log("this is token" + csrfToken);
+  if (csrfToken) {
+    // Jeżeli ciasteczko zostało znalezione, aktualizuj stan
+    setCsrftoken(csrfToken);
+    console.log("this is token 1 " +csrfToken);
+  }
+};
 
   useEffect(() => {
+    getCsrfToken();
     // Fetch user settings when the component mounts
     const fetchUserSettings = async () => {
       try {
@@ -42,15 +70,23 @@ const SettingsPage = () => {
   const saveGeneralSettings = (e) => {
     e.preventDefault();
 
-    // Wysyłanie danych do API, możesz dostosować endpoint i dane zgodnie z Twoimi potrzebami
     client
-      .post("/api/settings", {
-        displayNationality,
-        dailyGoal,
-        publicAccount,
-      })
+      .patch("/api/settings/update/",{
+        displayNationality : displayNationality,
+        dailyGoal : dailyGoal,
+        publicAccount : publicAccount,
+      },{
+        mode: "cors",
+        credentials: "include",
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+      }, )
       .then(function (res) {
         // Aktualizacja stanu aplikacji po zapisaniu ustawień
+        console.log("Changed settings")
         setCurrentUser(/* nowe dane użytkownika */);
       });
   };
@@ -105,7 +141,6 @@ const SettingsPage = () => {
             >
               <Tab eventKey="account" title="Konto">
                 <Form onSubmit={saveAccountSettings}>
-                  <CSRFToken />
                   {/* Pole input do zmiany nazwy użytkownika */}
                   <Form.Group className="mb-3" controlId="formUsername">
                     <Form.Label>Nazwa użytkownika</Form.Label>
@@ -141,7 +176,7 @@ const SettingsPage = () => {
                   </Button>
                 </Form>
                 <Form onSubmit={handleDeleteAccount}>
-                    <CSRFToken />
+                    {/* <CSRFToken /> */}
                     <Button
                       type="submit"
                       className="btn btn-warning btn-rounded mb-3 mt-3"
@@ -155,6 +190,7 @@ const SettingsPage = () => {
               {/* Pole checkbox czy wyświetlać narodowość użytkownika */}
               <Tab eventKey="general" title="Ogólne">
                 <Form onSubmit={saveGeneralSettings}>
+                  <input type="hidden" name="csrfmiddlewaretoken" value={csrfToken} />
                   <Form.Group
                     className="mb-3"
                     controlId="formDisplayNationality"
@@ -219,6 +255,7 @@ const SettingsPage = () => {
                     <Form.Check
                       type="checkbox"
                       label="Konto publiczne"
+                      name="publicAccount"
                       checked={publicAccount}
                       onChange={(e) => setPublicAccount(e.target.checked)}
                     />

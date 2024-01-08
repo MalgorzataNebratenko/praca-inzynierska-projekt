@@ -18,6 +18,7 @@ import LessonsPage from "./pages/LessonsPage";
 import ProfilePage from "./pages/ProfilePage";
 import DeckDetailsPage from "./pages/DeckDetailsPage";
 import FlashcardsLearnPage from "./pages/FlashcardsLearnPage";
+import StatsPage from "./pages/StatsPage";
 
 axios.defaults.xsrfCookieName = "csrftoken";
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
@@ -144,11 +145,8 @@ function App() {
             <Route
               path="/flashcards/create"
               element={
-                currentUser ? (
-                  <FlashcardsCreatePage />
-                ) : (
-                  <Navigate to="/login" />
-                )
+                currentUser ? 
+                  <FlashcardsCreatePage /> : <Navigate to="/login" />
               }
             />
             <Route
@@ -179,6 +177,12 @@ function App() {
               path="flashcards/deck/:deckId/learn"
               element={
                 currentUser ? <FlashcardsLearnPage /> : <Navigate to="/login" />
+              }
+            />
+            <Route
+              path="/stats"
+              element={
+                currentUser ? <StatsPage /> : <Navigate to="/login" />
               }
             />
           </Routes>

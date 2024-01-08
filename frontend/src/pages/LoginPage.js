@@ -24,8 +24,8 @@ const LoginPage = () => {
 
   const submitLogin = (e) => {
     e.preventDefault();
-    const csrfToken = Cookies.get("csrftoken");
-    console.log("CSRF Token:", csrfToken);
+    // const csrfToken = Cookies.get("csrftoken");
+    // console.log("CSRF Token:", csrfToken);
     client
       .post(
         "/api/login",
